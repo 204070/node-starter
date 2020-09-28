@@ -2,7 +2,7 @@ export class Result<T> {
 	public isSuccess: boolean;
 	public isFailure: boolean;
 	public error: T | string | undefined;
-	private _value: T | undefined;
+	private value: T | undefined;
 
 	public constructor(isSuccess: boolean, error?: T | string, value?: T) {
 		if (isSuccess && error) {
@@ -15,18 +15,17 @@ export class Result<T> {
 		this.isSuccess = isSuccess;
 		this.isFailure = !isSuccess;
 		this.error = error;
-		this._value = value;
+		this.value = value;
 
 		Object.freeze(this);
 	}
 
 	public getValue(): T | undefined {
 		if (!this.isSuccess) {
-			console.log(this.error);
 			throw new Error("Can't get the value of an error result. Use 'errorValue' instead.");
 		}
 
-		return this._value;
+		return this.value;
 	}
 
 	public errorValue(): T {
