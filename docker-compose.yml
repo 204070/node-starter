@@ -1,0 +1,72 @@
+# docker-compose.yml
+
+version: '3.7'
+
+services:
+  nodestarter-api:
+    build: .
+    container_name: nodestarter-api
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules/
+    ports:
+      - '3000:3000'
+    depends_on:
+      - nodestarter-db
+      - nodestarter-redis
+      - nodestarter-es
+    env_file:
+      - ./.env
+    logging:
+      driver: json-file
+
+  nodestarter-db:
+    restart: always
+    build: ./pgdata
+    container_name: nodestarter-db
+    environment:
+      POSTGRES_DB: nodestarterdevdb
+      POSTGRES_USER: nodestarter
+      POSTGRES_PASSWORD: nodestarter!23
+    volumes:
+      - nodestarter-pgdata:/var/lib/postgresql/data
+    logging:
+      driver: json-file
+    ports:
+      - 8001:5432
+
+  nodestarter-redis:
+    image: redis
+    container_name: nodestarter-cache
+    logging:
+      driver: json-file
+    ports:
+      - 6379:6379
+
+  nodestarter-es:
+    image: 'docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.2'
+    container_name: nodestarter-es
+    volumes:
+      - 'nodestarter-esdata:/app/data/elasticsearch/data'
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: 'true'
+      ES_JAVA_OPTS: -Xms256m -Xmx256m
+
+  nodestarter-kibana:
+    image: docker.elastic.co/kibana/kibana-oss:7.9.2
+    container_name: nodestarter-kibana
+    depends_on:
+      - nodestarter-es
+    ports:
+      - '5601:5601'
+    environment:
+      - ELASTICSEARCH_HOSTS=http://nodestarter-es:9200
+
+volumes:
+  nodestarter-pgdata:
+  nodestarter-esdata:
+  node_modules:
